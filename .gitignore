@@ -1,0 +1,20 @@
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Inno Setup
+installer_output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
