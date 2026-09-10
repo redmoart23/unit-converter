@@ -1,0 +1,48 @@
+name: Build and Release
+
+# Se dispara solo cuando se pushea un tag con formato v1.0.0, v1.2.3, etc.
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install pyinstaller customtkinter
+
+      - name: Extraer número de versión del tag (quita la "v" inicial)
+        id: get_version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Compilar el .exe con PyInstaller
+        run: pyinstaller --onefile --windowed --name Converter converter.py
+
+      - name: Instalar Inno Setup
+        run: choco install innosetup -y
+
+      - name: Compilar el instalador con la versión del tag
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss /DMyAppVersion=${{ steps.get_version.outputs.VERSION }}
+        shell: pwsh
+
+      - name: Publicar GitHub Release con el instalador adjunto
+        uses: softprops/action-gh-release@v2
+        with:
+          files: installer_output/ConverterSetup-*.exe
+          name: "v${{ steps.get_version.outputs.VERSION }}"
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
